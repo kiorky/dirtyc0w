@@ -5,6 +5,7 @@ cat dirtyc0w_asroot.sh;\
 echo press_enter;read;sudo bash dirtyc0w_asroot.sh
 "
 set -x
+log() { echo "${0}" >&2 ; }
 tmp="$(mktemp)"
 src="$(pwd)/dirtyc0w.c"
 bin=/dirtyc0w$(basename $tmp)
@@ -22,14 +23,18 @@ if [[ -n "$tmp" ]] && [ -e "$tmp" ];then
     chmod 2777 "${tmp}"
     rm -f "$f"
     touch "${f}"
-    gcc -pthread "$src" > "$bin"
-    su -s /bin/bash -l nobody "$bin" "$f" "$input"
-    if grep -q "$input" "$f";then
-        echo vuln
-        ret=455
+    if gcc -pthread "$src" > "$bin";then
+        su -s /bin/bash -l nobody "$bin" "$f" "$input"
+        if grep -q "$input" "$f";then
+            log vuln
+            ret=455
+        else
+            log nonvuln
+            ret=0
+        fi
     else
-        echo nonvuln
-        ret=0
+        log noncompiled
+        ret=3
     fi
 else
     ret=1

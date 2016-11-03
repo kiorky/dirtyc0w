@@ -42,7 +42,11 @@ if [[ -n "$tmp" ]] && [ -e "$tmp" ];then
     chmod 2777 "${tmp}"
     for src in ${srcs};do
         printf hame > "${f}"
-        pattern="/${src//.c}tmp.*"
+        if [ -z ${patterns-} ]; then
+            patterns="/${src//.c}tmp.*"
+        else
+            patterns="${patterns} /${src//.c}tmp.*"
+        fi
         bin=/${src//.c}$(basename $tmp)
         asrc=$W/$src
         if [ ! -e "$W/$src" ];then
@@ -72,9 +76,6 @@ if [[ -n "$tmp" ]] && [ -e "$tmp" ];then
                 ret=3
             fi
         fi
-        if [[ -z ${NODELETE-} ]];then
-            rm -vf $pattern $spattern
-        fi
         if grep -q "$input" "$f";then
             log vuln
             ret=455
@@ -85,6 +86,9 @@ else
     ret=1
 fi
 if [[ -z ${NODELETE-} ]];then
+    if [[ -n "${patterns-}" ]] ;then
+        rm -vf $patterns
+    fi
     rm -rf "${tmp}"
 fi
 exit $ret
